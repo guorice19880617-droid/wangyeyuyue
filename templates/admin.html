@@ -2,15 +2,38 @@
 <html>
 
 <head>
-<meta charset="utf-8">
-<title>预约表</title>
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<style>
+
+body{
+font-family:Arial;
+padding:20px;
+}
+
+button{
+padding:8px 12px;
+margin:3px;
+}
+
+</style>
+
 </head>
 
 <body>
 
-<h2>预约记录</h2>
+<h2>后台管理</h2>
 
-<table border="1">
+<a href=" ">
+<button>导出Excel</button>
+</a >
+
+<a href="/">
+<button>返回预约</button>
+</a >
+
+<table border="1" cellpadding="10">
 
 <tr>
 <th>日期</th>
@@ -22,16 +45,17 @@
 {% for r in rows %}
 
 <tr>
-<td>{{r[0]}}</td>
+
 <td>{{r[1]}}</td>
 <td>{{r[2]}}</td>
+<td>{{r[3]}}</td>
 
 <td>
-<form action="/delete" method="post">
-<input type="hidden" name="day" value="{{r[0]}}">
-<input type="hidden" name="time" value="{{r[1]}}">
-<button type="submit">删除</button>
-</form>
+
+<a href="/delete/{{r[0]}}?pwd={{pwd}}">
+<button>删除</button>
+</a >
+
 </td>
 
 </tr>
