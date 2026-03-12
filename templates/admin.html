@@ -16,6 +16,7 @@
 <th>日期</th>
 <th>时间</th>
 <th>姓名</th>
+<th>操作</th>
 </tr>
 
 {% for r in rows %}
@@ -24,6 +25,15 @@
 <td>{{r[0]}}</td>
 <td>{{r[1]}}</td>
 <td>{{r[2]}}</td>
+
+<td>
+<form action="/delete" method="post">
+<input type="hidden" name="day" value="{{r[0]}}">
+<input type="hidden" name="time" value="{{r[1]}}">
+<button type="submit">删除</button>
+</form>
+</td>
+
 </tr>
 
 {% endfor %}
