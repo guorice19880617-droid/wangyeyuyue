@@ -1,1 +1,75 @@
+<!DOCTYPE html>
+<html>
 
+<head>
+<meta charset="utf-8">
+<title>选择时间</title>
+
+<style>
+
+body{
+font-family:Arial;
+text-align:center;
+}
+
+button{
+padding:6px 12px;
+background:#2ecc71;
+border:none;
+border-radius:5px;
+color:white;
+}
+
+.booked{
+color:red;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>{{day}} 可预约时间</h2>
+
+<input type="text" id="name" placeholder="请输入姓名">
+
+{% for time in times %}
+
+<form action="/book" method="post">
+
+<input type="hidden" name="day" value="{{day}}">
+<input type="hidden" name="time" value="{{time}}">
+<input type="hidden" name="name" id="name_input">
+
+{{time}}
+
+{% if day + "_" + time in booking %}
+
+<span class="booked">已预约</span>
+
+{% else %}
+
+<button onclick="setName()">预约</button>
+
+{% endif %}
+
+</form>
+
+{% endfor %}
+
+<script>
+
+function setName(){
+
+var name=document.getElementById("name").value
+
+document.getElementById("name_input").value=name
+
+}
+
+</script>
+
+</body>
+
+</html>
