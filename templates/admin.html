@@ -1,1 +1,33 @@
+<!DOCTYPE html>
+<html>
 
+<head>
+<meta charset="utf-8">
+<title>预约管理</title>
+</head>
+
+<body>
+
+<h2>预约记录</h2>
+
+<table border="1">
+
+<tr>
+<th>时间</th>
+<th>姓名</th>
+</tr>
+
+{% for key,value in booking.items() %}
+
+<tr>
+<td>{{key}}</td>
+<td>{{value}}</td>
+</tr>
+
+{% endfor %}
+
+</table>
+
+</body>
+
+</html>
