@@ -3,7 +3,7 @@
 
 <head>
 <meta charset="utf-8">
-<title>预约管理</title>
+<title>预约表</title>
 </head>
 
 <body>
@@ -13,15 +13,17 @@
 <table border="1">
 
 <tr>
+<th>日期</th>
 <th>时间</th>
 <th>姓名</th>
 </tr>
 
-{% for key,value in booking.items() %}
+{% for r in rows %}
 
 <tr>
-<td>{{key}}</td>
-<td>{{value}}</td>
+<td>{{r[0]}}</td>
+<td>{{r[1]}}</td>
+<td>{{r[2]}}</td>
 </tr>
 
 {% endfor %}
