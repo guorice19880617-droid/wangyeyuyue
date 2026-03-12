@@ -4,40 +4,55 @@
 <head>
 <meta charset="utf-8">
 <title>预约系统</title>
-
-<style>
-
-body{
-font-family:Arial;
-text-align:center;
-background:#f5f5f5;
-}
-
-.day{
-display:block;
-margin:10px;
-padding:15px;
-background:white;
-border-radius:10px;
-text-decoration:none;
-color:black;
-}
-
-</style>
-
 </head>
 
 <body>
 
-<h2>预约日期</h2>
+<h2>预约系统</h2>
+
+<input type="text" id="name" placeholder="请输入姓名">
 
 {% for day in days %}
 
-<a class="day" href=" ">
-{{day}}
-</a >
+<h3>{{day}}</h3>
+
+{% for time in times %}
+
+<form action="/book" method="post">
+
+<input type="hidden" name="day" value="{{day}}">
+<input type="hidden" name="time" value="{{time}}">
+<input type="hidden" name="name" id="name_input">
+
+{{time}}
+
+{% if day + "_" + time in booking %}
+
+已预约
+
+{% else %}
+
+<button onclick="setName()">预约</button>
+
+{% endif %}
+
+</form>
 
 {% endfor %}
+
+{% endfor %}
+
+<script>
+
+function setName(){
+
+var name=document.getElementById("name").value
+
+document.getElementById("name_input").value=name
+
+}
+
+</script>
 
 </body>
 
