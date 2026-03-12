@@ -1,1 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>预约系统</title>
+</head>
 
+<body>
+
+<h2>预约系统</h2>
+
+{% for day in days %}
+
+<h3>{{day}}</h3>
+
+{% for time in times %}
+
+<form action="/book" method="post">
+
+<input type="hidden" name="day" value="{{day}}">
+<input type="hidden" name="time" value="{{time}}">
+
+{{time}}
+
+{% if day + "_" + time in booking %}
+ 已预约
+{% else %}
+<button type="submit">预约</button>
+{% endif %}
+
+</form>
+
+{% endfor %}
+
+{% endfor %}
+
+</body>
+</html>
