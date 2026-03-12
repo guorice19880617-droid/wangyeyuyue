@@ -1,6 +1,8 @@
 from flask import Flask, render_template, request
 import sqlite3
 import os
+import pandas as pd
+from flask import send_file
 
 app = Flask(__name__)
 
@@ -55,6 +57,21 @@ def delete():
     conn.commit()
 
     return "<script>window.location='/admin'</script>"
+
+@app.route("/export")
+def export():
+
+    cursor.execute("SELECT day,time,name FROM bookings")
+
+    rows = cursor.fetchall()
+
+    df = pd.DataFrame(rows, columns=["日期","时间","姓名"])
+
+    file = "booking.xlsx"
+
+    df.to_excel(file, index=False)
+
+    return send_file(file, as_attachment=True)
 @app.route("/book", methods=["POST"])
 def book():
 
