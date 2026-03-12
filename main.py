@@ -3,6 +3,7 @@ import sqlite3
 import os
 import pandas as pd
 from flask import send_file
+from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
 
@@ -59,6 +60,12 @@ def delete():
     return "<script>window.location='/admin'</script>"
 
 @app.route("/export")
+def reset_booking():
+
+    cursor.execute("DELETE FROM bookings")
+    conn.commit()
+
+    print("预约表已自动重置")
 def export():
 
     cursor.execute("SELECT day,time,name FROM bookings")
@@ -114,5 +121,12 @@ def admin():
 if __name__ == "__main__":
 
     port = int(os.environ.get("PORT",10000))
+    
+scheduler = BackgroundScheduler()
 
+# 每天凌晨3点清空预约
+scheduler.add_job(reset_booking, "cron", hour=3)
+
+scheduler.start()
+    
     app.run(host="0.0.0.0",port=port)
