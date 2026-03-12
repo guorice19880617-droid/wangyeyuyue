@@ -41,7 +41,20 @@ def home():
         times=times,
         booking=booking
     )
+@app.route("/delete", methods=["POST"])
+def delete():
 
+    day = request.form["day"]
+    time = request.form["time"]
+
+    cursor.execute(
+        "DELETE FROM bookings WHERE day=? AND time=?",
+        (day,time)
+    )
+
+    conn.commit()
+
+    return "<script>window.location='/admin'</script>"
 @app.route("/book", methods=["POST"])
 def book():
 
