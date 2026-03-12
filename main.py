@@ -144,16 +144,22 @@ def admin():
         rows=rows
     )
 
-# ⭐ Render 必须这样启动
-if __name__ == "__main__":
-
-    port = int(os.environ.get("PORT",10000))
-    
+# ===============================
+# 启动定时任务
+# ===============================
 scheduler = BackgroundScheduler()
 
 # 每天凌晨3点清空预约
 scheduler.add_job(reset_booking, "cron", hour=3)
 
 scheduler.start()
-    
-    app.run(host="0.0.0.0",port=port)
+
+
+# ===============================
+# 启动 Flask
+# ===============================
+if __name__ == "__main__":
+
+    port = int(os.environ.get("PORT", 10000))
+
+    app.run(host="0.0.0.0", port=port)
