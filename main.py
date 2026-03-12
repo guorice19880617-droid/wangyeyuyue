@@ -1,165 +1,222 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, redirect, send_file
 import sqlite3
-import os
 import pandas as pd
-from flask import send_file
-from apscheduler.schedulers.background import BackgroundScheduler
-import matplotlib.pyplot as plt
-from flask import send_file
+import os
 
 app = Flask(__name__)
 
-# 数据库连接
-conn = sqlite3.connect("booking.db", check_same_thread=False)
-cursor = conn.cursor()
+ADMIN_PASSWORD = "123456"
 
-# 创建表
-cursor.execute("""
-CREATE TABLE IF NOT EXISTS bookings(
-id INTEGER PRIMARY KEY AUTOINCREMENT,
-day TEXT,
-time TEXT,
-name TEXT
-)
-""")
+DB="booking.db"
 
-conn.commit()
 
-days = ["周一","周二","周三","周四","周五"]
-times = ["10:00","11:00","12:00"]
+# ==============================
+# 初始化数据库
+# ==============================
+
+def init_db():
+
+    conn = sqlite3.connect(DB)
+    cursor = conn.cursor()
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS bookings(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    day TEXT,
+    time TEXT,
+    name TEXT
+    )
+    """)
+
+    conn.commit()
+    conn.close()
+
+
+init_db()
+
+
+# ==============================
+# 预约页面
+# ==============================
 
 @app.route("/")
-def home():
+def index():
+
+    days=["周一","周二","周三","周四","周五"]
+
+    times=["10:00","11:00","14:00","15:00"]
+
+    conn=sqlite3.connect(DB)
+    cursor=conn.cursor()
 
     cursor.execute("SELECT day,time,name FROM bookings")
-    rows = cursor.fetchall()
 
-    booking = {}
+    rows=cursor.fetchall()
+
+    conn.close()
+
+    booking_dict={}
 
     for r in rows:
-        key = r[0]+"_"+r[1]
-        booking[key] = r[2]
+
+        booking_dict[f"{r[0]}_{r[1]}"]=r[2]
 
     return render_template(
         "index.html",
         days=days,
         times=times,
-        booking=booking
-    )
-@app.route("/delete", methods=["POST"])
-def delete():
-
-    day = request.form["day"]
-    time = request.form["time"]
-
-    cursor.execute(
-        "DELETE FROM bookings WHERE day=? AND time=?",
-        (day,time)
+        booking_dict=booking_dict
     )
 
-    conn.commit()
 
-    return "<script>window.location='/admin'</script>"
+# ==============================
+# 提交预约
+# ==============================
 
-@app.route("/export")
-def reset_booking():
-
-    cursor.execute("DELETE FROM bookings")
-    conn.commit()
-
-    print("预约表已自动重置")
-def export():
-
-    cursor.execute("SELECT day,time,name FROM bookings")
-
-    rows = cursor.fetchall()
-
-    df = pd.DataFrame(rows, columns=["日期","时间","姓名"])
-
-    file = "booking.xlsx"
-
-    df.to_excel(file, index=False)
-
-    return send_file(file, as_attachment=True)
-@app.route("/book", methods=["POST"])
+@app.route("/book",methods=["POST"])
 def book():
 
-    name = request.form["name"]
-    day = request.form["day"]
-    time = request.form["time"]
+    name=request.form["name"]
+    day=request.form["day"]
+    time=request.form["time"]
+
+    conn=sqlite3.connect(DB)
+    cursor=conn.cursor()
 
     cursor.execute(
-        "SELECT * FROM bookings WHERE day=? AND time=?",
-        (day,time)
+    "SELECT * FROM bookings WHERE day=? AND time=?",
+    (day,time)
     )
 
-    result = cursor.fetchone()
+    exist=cursor.fetchone()
 
-    if result:
-        return "该时间已被预约 <br><a href=' '>返回</a >"
+    if exist:
+
+        conn.close()
+
+        return "该时间已被预约"
 
     cursor.execute(
-        "INSERT INTO bookings (day,time,name) VALUES (?,?,?)",
-        (day,time,name)
+    "INSERT INTO bookings(day,time,name) VALUES(?,?,?)",
+    (day,time,name)
     )
 
     conn.commit()
+    conn.close()
 
-    return "预约成功 <br><a href='/'>返回</a >"
+    return redirect("/")
+
+
+# ==============================
+# 后台管理
+# ==============================
 
 @app.route("/admin")
-@app.route("/stats")
-def stats():
-
-    cursor.execute("SELECT time FROM bookings")
-
-    rows = cursor.fetchall()
-
-    times = [r[0] for r in rows]
-
-    result = {}
-
-    for t in times:
-
-        result[t] = result.get(t,0)+1
-
-    x = list(result.keys())
-    y = list(result.values())
-
-    plt.bar(x,y)
-
-    file = "stats.png"
-
-    plt.savefig(file)
-
-    return send_file(file)
 def admin():
 
-    cursor.execute("SELECT day,time,name FROM bookings")
+    pwd=request.args.get("pwd")
 
-    rows = cursor.fetchall()
+    if pwd!=ADMIN_PASSWORD:
 
-    return render_template(
-        "admin.html",
-        rows=rows
-    )
+        return "密码错误"
 
-# ===============================
-# 启动定时任务
-# ===============================
-scheduler = BackgroundScheduler()
+    conn=sqlite3.connect(DB)
+    cursor=conn.cursor()
 
-# 每天凌晨3点清空预约
-scheduler.add_job(reset_booking, "cron", hour=3)
+    cursor.execute("SELECT id,day,time,name FROM bookings")
 
-scheduler.start()
+    rows=cursor.fetchall()
+
+    conn.close()
+
+    return render_template("admin.html",rows=rows,pwd=pwd)
 
 
-# ===============================
-# 启动 Flask
-# ===============================
-if __name__ == "__main__":
+# ==============================
+# 删除预约
+# ==============================
 
-    port = int(os.environ.get("PORT", 10000))
+@app.route("/delete/<int:id>")
+def delete(id):
 
-    app.run(host="0.0.0.0", port=port)
+    pwd=request.args.get("pwd")
+
+    if pwd!=ADMIN_PASSWORD:
+
+        return "无权限"
+
+    conn=sqlite3.connect(DB)
+    cursor=conn.cursor()
+
+    cursor.execute("DELETE FROM bookings WHERE id=?",(id,))
+
+    conn.commit()
+    conn.close()
+
+    return redirect(f"/admin?pwd={pwd}")
+
+
+# ==============================
+# 导出Excel
+# ==============================
+
+@app.route("/export")
+def export():
+
+    pwd=request.args.get("pwd")
+
+    if pwd!=ADMIN_PASSWORD:
+
+        return "无权限"
+
+    conn=sqlite3.connect(DB)
+
+    df=pd.read_sql_query("SELECT day,time,name FROM bookings",conn)
+
+    conn.close()
+
+    file="booking.xlsx"
+
+    df.to_excel(file,index=False)
+
+    return send_file(file,as_attachment=True)
+
+
+# ==============================
+# 统计图表
+# ==============================
+
+@app.route("/chart")
+def chart():
+
+    pwd=request.args.get("pwd")
+
+    if pwd!=ADMIN_PASSWORD:
+
+        return "无权限"
+
+    conn=sqlite3.connect(DB)
+    cursor=conn.cursor()
+
+    cursor.execute("""
+    SELECT day,count(*)
+    FROM bookings
+    GROUP BY day
+    """)
+
+    rows=cursor.fetchall()
+
+    conn.close()
+
+    return rows
+
+
+# ==============================
+# 启动
+# ==============================
+
+if __name__=="__main__":
+
+    port=int(os.environ.get("PORT",10000))
+
+    app.run(host="0.0.0.0",port=port)
