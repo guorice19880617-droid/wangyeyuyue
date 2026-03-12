@@ -1,81 +1,25 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
-<meta charset="utf-8">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>预约系统</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
 
 <style>
 
 body{
-max-width:500px;
-margin:auto;
 font-family:Arial;
-background:#f5f5f5;
-}
-
-.header{
-background:#2c3e50;
-color:white;
-padding:15px;
-font-size:20px;
-text-align:center;
-}
-
-.namebox{
-padding:10px;
-}
-
-input{
-width:100%;
-padding:10px;
-font-size:16px;
-}
-
-.card{
-
-background:white;
-
-padding:15px;
-
-margin:10px;
-
-border-radius:10px;
-
-box-shadow:0 2px 5px rgba(0,0,0,0.1);
-
+padding:20px;
 }
 
 button{
-
 width:100%;
-
 padding:12px;
-
-font-size:16px;
-
-border:none;
-
-border-radius:8px;
-
-background:#4CAF50;
-
-color:white;
-
 margin-top:5px;
-
-}
-
-.booked{
-
-color:red;
-
-font-weight:bold;
-
+font-size:16px;
+background:#3498db;
+color:white;
+border:none;
+border-radius:8px;
 }
 
 </style>
@@ -84,66 +28,59 @@ font-weight:bold;
 
 <body>
 
-<div class="header">
-预约系统
-</div>
+<h2>预约系统</h2>
 
-<div class="namebox">
+<form method="post" action="/book">
 
-<input type="text" id="name" placeholder="请输入姓名">
+<input name="name" placeholder="请输入姓名" required style="width:100%;padding:10px">
 
-</div>
+<br><br>
 
-{% for day in days %}
+{% for d in days %}
 
-<div class="card">
+<h3>{{d}}</h3>
 
-<h3>{{day}}</h3>
+{% for t in times %}
 
-{% for time in times %}
+{% set key=d+"_"+t %}
 
-<form action="/book" method="post">
+{% if key in booking_dict %}
 
-<input type="hidden" name="day" value="{{day}}">
-<input type="hidden" name="time" value="{{time}}">
-<input type="hidden" name="name" id="name_input">
-
-<div>
-
-{{time}}
-
-{% if day + "_" + time in booking %}
-
-<span class="booked"> 已预约</span>
+<button disabled>{{t}} 已预约</button>
 
 {% else %}
 
-<button onclick="setName()">预约</button>
+<button name="day" value="{{d}}" onclick="this.form.time.value='{{t}}'">{{t}} 预约</button>
 
 {% endif %}
 
-</div>
+{% endfor %}
+
+{% endfor %}
+
+<input type="hidden" name="time">
 
 </form>
 
-{% endfor %}
+<hr>
+
+<div style="text-align:center">
+
+<button onclick="admin()">管理员入口</button>
 
 </div>
 
-{% endfor %}
-
 <script>
 
-function setName(){
+function admin(){
 
-var name=document.getElementById("name").value
+let pwd=prompt("请输入管理员密码")
 
-document.getElementById("name_input").value=name
+window.location="/admin?pwd="+pwd
 
 }
 
 </script>
 
 </body>
-
 </html>
