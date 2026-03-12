@@ -1,30 +1,43 @@
 from flask import Flask, render_template, request
-from datetime import datetime, timedelta
+import sqlite3
+import os
 
 app = Flask(__name__)
 
-# 自动生成未来7天日期
-days = []
-for i in range(7):
-    day = datetime.now() + timedelta(days=i)
-    days.append(day.strftime("%m-%d"))
+# 数据库连接
+conn = sqlite3.connect("booking.db", check_same_thread=False)
+cursor = conn.cursor()
 
-# 每天时间段
-times = ["10:00", "11:00", "12:00", "13:00"]
+# 创建表
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS bookings(
+id INTEGER PRIMARY KEY AUTOINCREMENT,
+day TEXT,
+time TEXT,
+name TEXT
+)
+""")
 
-# 预约记录
-booking = {}
+conn.commit()
+
+days = ["周一","周二","周三"]
+times = ["10:00","11:00","12:00"]
 
 @app.route("/")
 def home():
-    return render_template("index.html", days=days)
 
-@app.route("/day/<day>")
-def day_page(day):
+    cursor.execute("SELECT day,time,name FROM bookings")
+    rows = cursor.fetchall()
+
+    booking = {}
+
+    for r in rows:
+        key = r[0]+"_"+r[1]
+        booking[key] = r[2]
 
     return render_template(
-        "times.html",
-        day=day,
+        "index.html",
+        days=days,
         times=times,
         booking=booking
     )
@@ -36,18 +49,40 @@ def book():
     day = request.form["day"]
     time = request.form["time"]
 
-    key = f"{day}_{time}"
+    cursor.execute(
+        "SELECT * FROM bookings WHERE day=? AND time=?",
+        (day,time)
+    )
 
-    if key in booking:
-        return "该时间已被预约 <br><a href=' '>返回首页</a >"
+    result = cursor.fetchone()
 
-    booking[key] = name
+    if result:
+        return "该时间已被预约 <br><a href=' '>返回</a >"
 
-    return "预约成功 <br><a href='/'>返回首页</a >"
+    cursor.execute(
+        "INSERT INTO bookings (day,time,name) VALUES (?,?,?)",
+        (day,time,name)
+    )
+
+    conn.commit()
+
+    return "预约成功 <br><a href='/'>返回</a >"
 
 @app.route("/admin")
 def admin():
-    return render_template("admin.html", booking=booking)
 
+    cursor.execute("SELECT day,time,name FROM bookings")
+
+    rows = cursor.fetchall()
+
+    return render_template(
+        "admin.html",
+        rows=rows
+    )
+
+# ⭐ Render 必须这样启动
 if __name__ == "__main__":
-    app.run()
+
+    port = int(os.environ.get("PORT",10000))
+
+    app.run(host="0.0.0.0",port=port)
