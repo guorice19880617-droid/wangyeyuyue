@@ -4,6 +4,8 @@ import os
 import pandas as pd
 from flask import send_file
 from apscheduler.schedulers.background import BackgroundScheduler
+import matplotlib.pyplot as plt
+from flask import send_file
 
 app = Flask(__name__)
 
@@ -106,6 +108,31 @@ def book():
     return "预约成功 <br><a href='/'>返回</a >"
 
 @app.route("/admin")
+@app.route("/stats")
+def stats():
+
+    cursor.execute("SELECT time FROM bookings")
+
+    rows = cursor.fetchall()
+
+    times = [r[0] for r in rows]
+
+    result = {}
+
+    for t in times:
+
+        result[t] = result.get(t,0)+1
+
+    x = list(result.keys())
+    y = list(result.values())
+
+    plt.bar(x,y)
+
+    file = "stats.png"
+
+    plt.savefig(file)
+
+    return send_file(file)
 def admin():
 
     cursor.execute("SELECT day,time,name FROM bookings")
